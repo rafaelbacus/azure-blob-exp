@@ -1,25 +1,26 @@
 ﻿using AzureBlobStorageExp.Models;
+using AzureBlobStorageExp.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace AzureBlobStorageExp.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly IFileService _fileService;
         private readonly ILogger<HomeController> _logger;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(IFileService fileService, ILogger<HomeController> logger)
         {
+            _fileService = fileService;
             _logger = logger;
         }
 
         public IActionResult Index()
         {
+            // Get File List from Azure
+
             return View();
         }
 
