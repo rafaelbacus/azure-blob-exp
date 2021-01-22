@@ -1,9 +1,8 @@
-﻿using AzureBlobStorageExp.Services.Interfaces;
+﻿using AzureBlobStorageExp.Models;
+using AzureBlobStorageExp.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace AzureBlobStorageExp.Controllers
@@ -22,9 +21,10 @@ namespace AzureBlobStorageExp.Controllers
         {
             foreach (var file in files)
             {
-                _fileService.SetFileName(file.FileName);
-                _fileService.SetStream(file.OpenReadStream());
-                _fileService.Create();
+                using (var azureFile = new AzureFile(file.FileName, file.OpenReadStream()))
+                {
+                    await _fileService.Create(azureFile);
+                }
             }
 
             return RedirectToAction(nameof(HomeController.Index), "Home");

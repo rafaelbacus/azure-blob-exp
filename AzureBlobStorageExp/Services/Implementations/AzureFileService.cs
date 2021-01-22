@@ -1,90 +1,69 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using AzureBlobStorageExp.Models.Interfaces;
+using AzureBlobStorageExp.Options;
 using AzureBlobStorageExp.Services.Interfaces;
+using Microsoft.Extensions.Options;
 using System;
-using System.IO;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace AzureBlobStorageExp.Services.Implementations
 {
     public class AzureFileService : IFileService
-    {        
+    {
         private BlobServiceClient blobServiceClient;
-        private BlobContainerClient blobContainerClient;
 
-        private readonly string AzureBlobConnectionString = "DefaultEndpointsProtocol=https;AccountName=rbstrgaccnt;AccountKey=DOr4gSwOUJrPKmFXpt51jhoWObHYXByZXcwP53BP8vvPU3aShNJDuKwIyOjz94OcK6LgQWRc+FaDN2Nxaae/tA==;EndpointSuffix=core.windows.net";
-        private readonly string BlobContainerName = "blob-container-08281992";
+        private string azureStorageAccountConnectionString;
+        private string blobContainerName;
 
-        private string FileName;
-        private Stream Stream;
+        private readonly AzureOptions azureOptions;
 
-        public AzureFileService()
+        public AzureFileService(IOptionsSnapshot<AzureOptions> snapshot)
         {
-            blobServiceClient = new BlobServiceClient(AzureBlobConnectionString);
-
-            var blobContainers = blobServiceClient.GetBlobContainers();
-            var blobContainerItem = blobContainers.FirstOrDefault(c => c.Name.Equals(BlobContainerName, StringComparison.InvariantCultureIgnoreCase));
-            if (blobContainerItem == null)
-            {
-                blobContainerClient = blobServiceClient.CreateBlobContainer(BlobContainerName);
-            }
-            else
-            {
-                blobContainerClient = blobServiceClient.GetBlobContainerClient(BlobContainerName);
-            }
-
-            blobContainerClient.SetAccessPolicy(PublicAccessType.Blob);
+            azureOptions = snapshot.Value;
+            azureStorageAccountConnectionString = azureOptions.StorageAccount.ConnectionString;
+            blobContainerName = azureOptions.StorageAccount.BlobContainerName;
+            blobServiceClient = new BlobServiceClient(azureStorageAccountConnectionString);
         }
 
-        public void Create()
+        public async Task Create(IFile file)
         {
-            if (string.IsNullOrWhiteSpace(FileName))
+            if (string.IsNullOrWhiteSpace(file.FileName))
             {
                 throw new Exception("File name not set.");
             }
 
-            if (Stream == null || Stream.Length <= 0)
+            if (file.Stream == null || file.Stream.Length <= 0)
             {
                 throw new Exception("No stream open.");
             }
 
-            var blobClient = blobContainerClient.GetBlobClient(FileName);
-            blobClient.Upload(Stream);
-
-            FileName = null;
-            Stream.Dispose();
+            var blobContainerClient = await GetBlobContainerClient();
+            var blobClient = blobContainerClient.GetBlobClient(file.FileName);
+            await blobClient.UploadAsync(file.Stream);
         }
 
-        public void Delete()
+        private async Task<BlobContainerClient> GetBlobContainerClient()
         {
-            throw new NotImplementedException();
-        }
+            BlobContainerClient blobContainerClient = null;
 
-        public void Get()
-        {
-            throw new NotImplementedException();
-        }
+            var blobContainers = blobServiceClient.GetBlobContainersAsync();
+            await foreach (var blobContainer in blobContainers)
+            {
+                if (blobContainer.Name.Equals(blobContainerName, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    blobContainerClient = blobServiceClient.GetBlobContainerClient(blobContainer.Name);
+                }
+            }
 
-        public void List()
-        {
-            throw new NotImplementedException();
-        }
+            if (blobContainerClient == null)
+            {
+                blobContainerClient = blobServiceClient.CreateBlobContainer(blobContainerName);
+            }
 
-        public void Update()
-        {
-            throw new NotImplementedException();
-        }
+            blobContainerClient.SetAccessPolicy(PublicAccessType.Blob);
 
-        public void SetFileName(string fileName)
-        {
-            FileName = fileName;   
-        }
-
-        public void SetStream(Stream stream)
-        {
-            Stream = stream;
+            return blobContainerClient;
         }
     }
-
-    
 }

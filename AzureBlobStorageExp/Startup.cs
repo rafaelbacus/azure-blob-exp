@@ -1,3 +1,4 @@
+using AzureBlobStorageExp.Options;
 using AzureBlobStorageExp.Registries;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -21,6 +22,8 @@ namespace AzureBlobStorageExp
         {
             services.AddControllersWithViews()
                     .AddRazorRuntimeCompilation();
+
+            services.Configure<AzureOptions>(Configuration.GetSection("Azure"));
 
             services.AddBusinessServices();
         }
