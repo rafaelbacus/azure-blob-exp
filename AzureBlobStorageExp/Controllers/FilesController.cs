@@ -9,11 +9,11 @@ namespace AzureBlobStorageExp.Controllers
 {
     public class FilesController : Controller
     {
-        private readonly IFileService _fileService;
+        private readonly IFileUploader _fileUploader;
 
-        public FilesController(IFileService fileService)
+        public FilesController(IFileUploader fileUploader)
         {
-            _fileService = fileService;
+            _fileUploader = fileUploader;
         }
 
         [HttpPost]
@@ -23,7 +23,7 @@ namespace AzureBlobStorageExp.Controllers
             {
                 using (var azureFile = new AzureFile(file.FileName, file.OpenReadStream()))
                 {
-                    await _fileService.Create(azureFile);
+                    await _fileUploader.Upload(azureFile);
                 }
             }
 

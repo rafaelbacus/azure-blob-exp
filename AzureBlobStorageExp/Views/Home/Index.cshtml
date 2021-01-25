@@ -1,11 +1,12 @@
-﻿@{
+﻿@model IEnumerable<AzureBlobStorageExp.Models.AzureFile>
+@{
     ViewData["Title"] = "Home Page";
 }
 
 <div>
     <form asp-controller="Files" asp-action="Upload" method="post" enctype="multipart/form-data">
         <h1 class="display-5">Select File(s)</h1>
-        <input type="file" name="files" multiple/>
+        <input type="file" name="files" multiple />
         <button class="btn btn-primary" type="submit">Upload</button>
     </form>
 </div>
@@ -13,10 +14,16 @@
     <table>
         <thead>
             <tr>
-                <th></th>
-                <th></th>
+                <th>File Name</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+            @foreach (var file in Model)
+            {
+                <tr>
+                    <td>@file.FileName</td>
+                </tr>
+            }
+        </tbody>
     </table>
 </div>

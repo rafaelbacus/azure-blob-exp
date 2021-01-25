@@ -1,14 +1,12 @@
-﻿using AzureBlobStorageExp.Models.Interfaces;
+﻿using AzureBlobStorageExp.Models;
+using AzureBlobStorageExp.Models.Interfaces;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace AzureBlobStorageExp.Services.Interfaces
 {
     public interface IFileService
     {
-        Task Create(IFile file);
-        //void Get();
-        //void List();
-        //void Update();
-        //void Delete();
+        Task<IEnumerable<AzureFile>> ListFiles();
     }
 }

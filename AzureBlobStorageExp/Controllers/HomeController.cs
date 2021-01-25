@@ -3,6 +3,7 @@ using AzureBlobStorageExp.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace AzureBlobStorageExp.Controllers
 {
@@ -17,11 +18,11 @@ namespace AzureBlobStorageExp.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            // Get File List from Azure
+            var files = await _fileService.ListFiles();
 
-            return View();
+            return View(files);
         }
 
         public IActionResult Privacy()

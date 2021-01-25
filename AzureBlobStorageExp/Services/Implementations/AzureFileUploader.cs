@@ -1,53 +1,49 @@
-﻿using Azure.Storage.Blobs;
+using System;
+using System.Threading.Tasks;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using AzureBlobStorageExp.Models;
-using AzureBlobStorageExp.Models.Interfaces;
 using AzureBlobStorageExp.Options;
 using AzureBlobStorageExp.Services.Interfaces;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace AzureBlobStorageExp.Services.Implementations
 {
-    public class AzureFileService : IFileService
+    public class AzureFileUploader : IFileUploader
     {
-        private BlobServiceClient blobServiceClient;
+        private readonly AzureOptions azureOptions;
+        private readonly BlobServiceClient blobServiceClient;
 
         private readonly string azureStorageAccountConnectionString;
         private readonly string blobContainerName;
-        private readonly string blobEndpoint;
-        private readonly string storageAccountName;
 
-        private readonly AzureOptions azureOptions;
-
-        public AzureFileService(IOptionsSnapshot<AzureOptions> snapshot)
+        public AzureFileUploader(IOptionsSnapshot<AzureOptions> snapshot)
         {
             azureOptions = snapshot.Value;
             azureStorageAccountConnectionString = azureOptions.StorageAccount.ConnectionString;
-
             blobContainerName = azureOptions.StorageAccount.BlobContainerName;
-            blobEndpoint = azureOptions.StorageAccount.BlobEndpoint;
             blobServiceClient = new BlobServiceClient(azureStorageAccountConnectionString);
-            storageAccountName = azureOptions.StorageAccount.StorageAccountName;
         }
 
-        public async Task<IEnumerable<AzureFile>> ListFiles()
+        public async Task Upload(AzureFile file)
         {
-            var files = new List<AzureFile>();
-
-            var blobContainerClient = await GetBlobContainerClient();
-            var blobs = blobContainerClient.GetBlobsAsync();
-            await foreach (var blob in blobs)
+            if (string.IsNullOrWhiteSpace(file.FileName))
             {
-                var file = new AzureFile(blob.Name);
-                file.Uri = new Uri($"https://{storageAccountName}.{blobEndpoint}/{blobContainerName}/{blob.Name}");
-                files.Add(file);
+                throw new Exception("File name not set.");
             }
 
-            return files;
+            if (file.Stream == null || file.Stream.Length <= 0)
+            {
+                throw new Exception("No stream open.");
+            }
+
+            var blobContainerClient = await GetBlobContainerClient();
+            var blobClient = blobContainerClient.GetBlobClient(file.FileName);
+            await blobClient.UploadAsync(file.Stream, overwrite: true);
         }
+
+
+        #region Private Methods
 
         private async Task<BlobContainerClient> GetBlobContainerClient()
         {
@@ -71,5 +67,7 @@ namespace AzureBlobStorageExp.Services.Implementations
 
             return blobContainerClient;
         }
+
+        #endregion
     }
 }
